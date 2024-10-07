@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <map>
 
-enum class DataTypes{ Int, Double, String, Undefined };
+enum class DataTypes{ Int, Double, Float, String, Undefined };
 
-std::map<DataTypes, std::string> TypesMap = {{DataTypes::Int, "Int"}, {DataTypes::Double, "Double"}, {DataTypes::String, "String"}, {DataTypes::Undefined, "Undefined"}};
+std::map<DataTypes, std::string> TypesMap = {{DataTypes::Int, "Int"}, {DataTypes::Double, "Double"}, {DataTypes::Float, "Float"}, {DataTypes::String, "String"}, {DataTypes::Undefined, "Undefined"}};
 
 struct DataReturn{
 	std::string value;
@@ -33,11 +33,16 @@ struct DataNode{
 	std::string id;
 	std::vector<uint8_t> bytes;
 	DataTypes dataType;
-	void GetData(int data);
-	void GetData(std::string data);
+	void GetData(int value);
+	void GetData(std::string value);
+	void GetData(double value);
+	void GetData(float value);
 	void PrintData();
 	void PrintBytes();
 	DataReturn ReturnData();
+	std::string DataString();
+	void SaveData(std::string path);
+	void LoadData(std::string path);
 };
 
 void DataNode::GetData(int value){
@@ -45,9 +50,21 @@ void DataNode::GetData(int value){
 	std::memcpy(bytes.data(), &value, sizeof(value));
 	dataType = DataTypes::Int;
 }
+void DataNode::GetData(double value){
+	std::cout<<"double"<<std::endl;
+	bytes.resize(sizeof(value));
+	std::memcpy(bytes.data(), &value, sizeof(value));
+	dataType = DataTypes::Double;
+}
+void DataNode::GetData(float value){
+	std::cout<<"float"<<std::endl;
+	bytes.resize(sizeof(value));
+	std::memcpy(bytes.data(), &value, sizeof(value));
+	dataType = DataTypes::Float;
+}
 void DataNode::GetData(std::string value){
 	bytes.resize(value.size());
-	std::memcpy(bytes.data(), value.data(), sizeof(value));
+	std::memcpy(bytes.data(), value.data(), value.size());
 	dataType = DataTypes::String;
 }
 
@@ -55,7 +72,17 @@ void DataNode::PrintData(){
 	if(dataType == DataTypes::Int){
 		int value;
 		std::memcpy(&value, this->bytes.data(), sizeof(value));
-		std::cout<<value<<std::endl;
+		std::cout<<std::to_string(value)<<std::endl;
+	}
+	if(dataType == DataTypes::Double){
+		double value;
+		std::memcpy(&value, this->bytes.data(), sizeof(value));
+		std::cout<<std::to_string(value)<<std::endl;
+	}
+	if(dataType == DataTypes::Float){
+		float value;
+		std::memcpy(&value, this->bytes.data(), sizeof(value));
+		std::cout<<std::to_string(value)<<std::endl;
 	}
 	else if(dataType == DataTypes::String){
 		std::string value(this->bytes.begin(), this->bytes.end());
@@ -74,22 +101,63 @@ DataReturn DataNode::ReturnData(){
 		std::memcpy(&value, this->bytes.data(), sizeof(value));
 		return DataReturn(std::to_string(value), this->dataType);
 	}
+	else if(this->dataType == DataTypes::Double){
+		double value;
+		std::memcpy(&value, this->bytes.data(), sizeof(value));
+		return DataReturn(std::to_string(value), this->dataType);
+	}
+	else if(this->dataType == DataTypes::Float){
+		float value;
+		std::memcpy(&value, this->bytes.data(), sizeof(value));
+		return DataReturn(std::to_string(value), this->dataType);
+	}
 	else if(this->dataType == DataTypes::String){
 		std::string value(this->bytes.begin(), this->bytes.end());
 		return DataReturn(value, this->dataType);
 	}
 	return DataReturn();
 }
+std::string DataNode::DataString(){
+	std::string dataString;
+	for(int i=0; i<this->bytes.size(); i++){
+		dataString+=char(this->bytes[i]);
+	}
+	return dataString;
+}
+void DataNode::SaveData(std::string path){
+	std::ofstream file(path+this->id+".dff");
+	file<<this->DataString()<<std::endl;
+	file<<static_cast<char>(this->dataType)<<std::endl;
+	file.close();
+}
+void DataNode::LoadData(std::string path){
+	std::ifstream file(path+this->id+".dff");
+	std::string value;
+	int i = 0;
+	while(getline(file, value)){
+		if(i==0){
+			bytes.resize(value.size());
+			std::memcpy(bytes.data(), value.data(), value.size());
+			i+=1;
+			for(int j=0; j<bytes.size(); j++){
+				std::cout<<static_cast<int>(bytes[j])<<" ";
+			}
+		}
+		else{
+			std::cout<<TypesMap[static_cast<DataTypes>(int(value[0]))]<<std::endl;
+			this->dataType = static_cast<DataTypes>(int(value[0]));
+		}
+	}
+}
 
 int main(){
 	
 	DataNode node;
-	node.GetData(19482);
-	node.PrintBytes();
-	node.PrintData();
-	node.GetData("test textą");
-	node.PrintBytes();
-	node.PrintData();
+	node.id = "14";
+	node.GetData(-523.241);
+	node.SaveData("");
+	node.GetData(83);
+	node.LoadData("");
 	node.ReturnData().PrintData();
 	return 0;
 }
