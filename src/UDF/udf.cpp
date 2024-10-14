@@ -51,13 +51,11 @@ void DataNode::GetData(int value){
 	dataType = DataTypes::Int;
 }
 void DataNode::GetData(double value){
-	std::cout<<"double"<<std::endl;
 	bytes.resize(sizeof(value));
 	std::memcpy(bytes.data(), &value, sizeof(value));
 	dataType = DataTypes::Double;
 }
 void DataNode::GetData(float value){
-	std::cout<<"float"<<std::endl;
 	bytes.resize(sizeof(value));
 	std::memcpy(bytes.data(), &value, sizeof(value));
 	dataType = DataTypes::Float;
@@ -125,13 +123,13 @@ std::string DataNode::DataString(){
 	return dataString;
 }
 void DataNode::SaveData(std::string path){
-	std::ofstream file(path+this->id+".dff");
+	std::ofstream file(path+this->id+".asc");
 	file<<this->DataString()<<std::endl;
 	file<<static_cast<char>(this->dataType)<<std::endl;
 	file.close();
 }
 void DataNode::LoadData(std::string path){
-	std::ifstream file(path+this->id+".dff");
+	std::ifstream file(path+this->id+".asc");
 	std::string value;
 	int i = 0;
 	while(getline(file, value)){
@@ -148,17 +146,5 @@ void DataNode::LoadData(std::string path){
 			this->dataType = static_cast<DataTypes>(int(value[0]));
 		}
 	}
-}
-
-int main(){
-	
-	DataNode node;
-	node.id = "14";
-	node.GetData(-523.241);
-	node.SaveData("");
-	node.GetData(83);
-	node.LoadData("");
-	node.ReturnData().PrintData();
-	return 0;
 }
 
